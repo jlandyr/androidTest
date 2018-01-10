@@ -5,12 +5,15 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     val TAG = MainActivity::class.java.canonicalName
     var stone_button : Button? = null
     var donkey_button: Button? = null
+
+    var offlineWeatherImage : ImageView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +27,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         //otra forma más kotlinera de hacer
 //        findViewById<Button>(R.id.stone_button).setOnClickListener(this)
 //        findViewById<Button>(R.id.donkey_button).setOnClickListener(this)
-
+        offlineWeatherImage = findViewById(R.id.offline_weather_image)
 
         Log.v(TAG, "onCreate")
         if (savedInstanceState != null){
@@ -68,6 +71,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.stone_button -> "onClick -> stone_button"
             R.id.donkey_button -> "onClick -> donkey_button"
             else -> "onClick -> no se que pulsaron"
+        })
+
+        //CAMBIAR IMAGEN
+//        when (p0?.id){
+//            R.id.stone_button -> offlineWeatherImage?.setImageResource(R.drawable.offline_weather)
+//            R.id.donkey_button -> offlineWeatherImage?.setImageResource(R.drawable.offline_weather2)
+//        }
+
+        //forma mas kotlinera
+        offlineWeatherImage?.setImageResource(when (p0?.id){
+            R.id.stone_button -> R.drawable.offline_weather
+            else -> R.drawable.offline_weather2
         })
 
     }

@@ -8,4 +8,7 @@
     <string name="max_temp_format">Temp. Máxima: %.2f ºC</string>
     <string name="min_temp_format">Temp. Mínima: %.2f ºC</string>
     <string name="humidity_format">Humedad: %.0f %%</string>
+    <string name="enter_units">Elige las unidades de temperatura:</string>
+    <string name="celsius_unit">celsius</string>
+    <string name="farenheit_unit">farenheit</string>
 </resources>

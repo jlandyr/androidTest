@@ -11,4 +11,5 @@
     <string name="enter_units">Elige las unidades de temperatura:</string>
     <string name="celsius_unit">celsius</string>
     <string name="farenheit_unit">farenheit</string>
+    <string name="settings">ajustes</string>
 </resources>

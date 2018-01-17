@@ -17,6 +17,7 @@ class Forecast(var maxTemp: Float, var mineTemp: Float, var humidity:Float, var 
         TempUnit.FARENHEIT -> toFahrenheit(maxTemp)
     }
     fun getMinTemp(units: TempUnit) = when (units){
+
         TempUnit.CELSIUS -> mineTemp
         TempUnit.FARENHEIT -> toFahrenheit(mineTemp)
     }

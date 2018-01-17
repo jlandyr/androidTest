@@ -15,8 +15,8 @@ import kotlinx.android.synthetic.main.activity_settings.*
 
 class ForecastActivity : AppCompatActivity() {
 
-    var maxTemp: TextView? = null
-    var minTemp: TextView? = null
+    lateinit var maxTemp: TextView //lateinit asegura que al momento de crear la variable va a tener una valor
+    lateinit var minTemp: TextView  //lateinit permite usarla sin ? al final del nombre del a variable
 
     var forecast : Forecast? = null
         set(value) {
@@ -28,7 +28,7 @@ class ForecastActivity : AppCompatActivity() {
             val forecastDescription = findViewById<TextView>(R.id.forecast_description)
 
             //actualizamos vista con modelo
-            if (value != null){
+            value?.let{//parecido a if let de swift
                 forecastImage.setImageResource(value.icon)
                 forecastDescription.text = value.description
 //                val maxTempString = getString(R.string.max_temp_format, value.maxTemp)
@@ -111,8 +111,8 @@ class ForecastActivity : AppCompatActivity() {
         val unitsString = temperatureUnitsString(units)
         val maxTempString = getString(R.string.max_temp_format, forecast?.getMaxTemp(units), unitsString)
         val minTempString = getString(R.string.min_temp_format, forecast?.getMinTemp(units), unitsString)
-        maxTemp?.text = maxTempString
-        minTemp?.text = minTempString
+        maxTemp.text = maxTempString
+        minTemp.text = minTempString
     }
 
     private fun temperatureUnitsString(units: Forecast.TempUnit) = if (units == Forecast.TempUnit.CELSIUS) "C" else "F"

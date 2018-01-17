@@ -20,7 +20,9 @@ class SettingsActivity: AppCompatActivity (){
             return intent
         }
     }
-    var radioGroup: RadioGroup? = null
+
+    val radioGroup by lazy {findViewById<RadioGroup>(R.id.units_rb)}
+    //la 1ra vez que se accede a radioGroup, el código entre paréntesis inicia radioGroup y queda inicializado, ya no es null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,9 +30,9 @@ class SettingsActivity: AppCompatActivity (){
 
         findViewById<View>(R.id.ok_button).setOnClickListener{acceptSettings()}
         findViewById<View>(R.id.cancel_button).setOnClickListener{cancelSettings()}
-        radioGroup = findViewById(R.id.units_rb)
+//        radioGroup = findViewById(R.id.units_rb)
         val radioSelected = intent.getIntExtra(EXTRA_UNITS, R.id.celsius_rb)
-        radioGroup?.check(radioSelected)
+        radioGroup.check(radioSelected)
     }
 
 

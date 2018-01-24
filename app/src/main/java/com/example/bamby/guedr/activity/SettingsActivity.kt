@@ -1,13 +1,13 @@
-package com.example.bamby.guedr
+package com.example.bamby.guedr.activity
 
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.RadioGroup
+import com.example.bamby.guedr.R
 
 class SettingsActivity: AppCompatActivity (){
     companion object {

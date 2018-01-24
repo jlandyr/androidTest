@@ -1,8 +1,5 @@
-package com.example.bamby.guedr
+package com.example.bamby.guedr.model
 
-/**
- * Created by Bamby on 10/1/18.
- */
 class Forecast(var maxTemp: Float, var mineTemp: Float, var humidity:Float, var description: String, var icon: Int) {
 
     enum class TempUnit{

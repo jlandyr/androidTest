@@ -1,4 +1,4 @@
-package com.example.bamby.guedr
+package com.example.bamby.guedr.fragment
 
 import android.app.Activity
 import android.app.Fragment
@@ -10,6 +10,11 @@ import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
+
+import com.example.bamby.guedr.PREFERENCE_SHOW_CELSIUS
+import com.example.bamby.guedr.R
+import com.example.bamby.guedr.activity.SettingsActivity
+import com.example.bamby.guedr.model.Forecast
 
 class ForecastFragment: Fragment() {
     companion object {
@@ -49,7 +54,7 @@ class ForecastFragment: Fragment() {
          super.onCreateView(inflater, container, savedInstanceState)
         if (inflater != null) {
             root = inflater.inflate(R.layout.fragment_forecast, container, false)
-            forecast = Forecast(maxTemp = 25f, mineTemp = 10f, humidity = 35f,description = "Día soleado", icon = R.drawable.ico_01)
+            forecast = Forecast(maxTemp = 25f, mineTemp = 10f, humidity = 35f, description = "Día soleado", icon = R.drawable.ico_01)
         }
         return root
     }

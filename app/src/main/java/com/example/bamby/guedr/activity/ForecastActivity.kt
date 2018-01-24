@@ -1,7 +1,8 @@
-package com.example.bamby.guedr
+package com.example.bamby.guedr.activity
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import com.example.bamby.guedr.R
 
 class ForecastActivity : AppCompatActivity() {
 

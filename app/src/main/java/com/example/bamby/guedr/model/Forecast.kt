@@ -1,6 +1,8 @@
 package com.example.bamby.guedr.model
 
-class Forecast(var maxTemp: Float, var mineTemp: Float, var humidity:Float, var description: String, var icon: Int) {
+import java.io.Serializable
+
+class Forecast(var maxTemp: Float, var mineTemp: Float, var humidity:Float, var description: String, var icon: Int) : Serializable {
 
     enum class TempUnit{
         CELSIUS,

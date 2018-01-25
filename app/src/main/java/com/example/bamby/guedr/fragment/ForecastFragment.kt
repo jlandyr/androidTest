@@ -14,17 +14,36 @@ import android.widget.TextView
 import com.example.bamby.guedr.PREFERENCE_SHOW_CELSIUS
 import com.example.bamby.guedr.R
 import com.example.bamby.guedr.activity.SettingsActivity
+import com.example.bamby.guedr.model.City
 import com.example.bamby.guedr.model.Forecast
+import org.w3c.dom.Text
 
 class ForecastFragment: Fragment() {
     companion object {
         val REQUEST_UNITS = 1
+        private var ARG_CITY = "ARG_CITY"
+
+        fun newInstance(city:City): ForecastFragment {
+            val fragment = ForecastFragment()
+            val arguments = Bundle()
+            arguments.putSerializable(ARG_CITY, city)
+            fragment.arguments = arguments
+            return fragment
+        }
     }
 
     lateinit var root: View
     lateinit var maxTemp: TextView //lateinit asegura que al momento de crear la variable va a tener una valor
     lateinit var minTemp: TextView  //lateinit permite usarla sin ? al final del nombre del a variable
 
+
+    var city: City? = null
+        set(value){
+            if (value != null){
+                root.findViewById<TextView>(R.id.city).text = value.name
+                forecast = value.forecast
+            }
+        }
 
     var forecast : Forecast? = null
         set(value) {
@@ -54,8 +73,12 @@ class ForecastFragment: Fragment() {
          super.onCreateView(inflater, container, savedInstanceState)
         if (inflater != null) {
             root = inflater.inflate(R.layout.fragment_forecast, container, false)
-            forecast = Forecast(maxTemp = 25f, mineTemp = 10f, humidity = 35f, description = "Día soleado", icon = R.drawable.ico_01)
+//            forecast = Forecast(maxTemp = 25f, mineTemp = 10f, humidity = 35f, description = "Día soleado", icon = R.drawable.ico_01)
+            if (arguments != null){
+                city = arguments.getSerializable(ARG_CITY) as? City
+            }
         }
+
         return root
     }
 

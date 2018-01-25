@@ -12,4 +12,6 @@
     <string name="celsius_unit">celsius</string>
     <string name="farenheit_unit">farenheit</string>
     <string name="settings">ajustes</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
 </resources>

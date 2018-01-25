@@ -18,13 +18,8 @@ import com.example.bamby.guedr.model.City
 class CityListFragment : Fragment() {
     companion object {
 
-        private val ARG_CITIES = "ARG_CITIES"
-
-        fun newInstance(cities: Cities): CityListFragment {
+        fun newInstance(): CityListFragment {
             val fragment = CityListFragment()
-            val args = Bundle()
-            args.putSerializable(ARG_CITIES, cities)
-            fragment.arguments = args
             return fragment
         }
     }
@@ -35,9 +30,7 @@ class CityListFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (arguments != null) {
-            cities = arguments.getSerializable(ARG_CITIES) as? Cities
-        }
+
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
@@ -46,13 +39,13 @@ class CityListFragment : Fragment() {
         if (inflater != null){
             root = inflater.inflate(R.layout.fragment_city_list, container, false)
             val list = root.findViewById<ListView>(R.id.city_list)
-            val adapter = ArrayAdapter<City>(activity, android.R.layout.simple_list_item_1, cities?.toArray())
+            val adapter = ArrayAdapter<City>(activity, android.R.layout.simple_list_item_1, Cities.toArray())
             list.adapter = adapter
 
             //nos enteramos de que se ha pulsado un elemento de la lista
             list.setOnItemClickListener { _, _, position, _ ->
                 //aviso al listener
-                onCitySelectedListener?.onCitySelected(cities?.get(position), position)
+                onCitySelectedListener?.onCitySelected(Cities.get(position), position)
             }
         }
         return root
@@ -63,6 +56,7 @@ class CityListFragment : Fragment() {
         commonAttach(context)
     }
 
+    @Suppress("OverridingDeprecatedMember", "DEPRECATION")
     override fun onAttach(activity: Activity?) {
         super.onAttach(activity)
         commonAttach(activity)
@@ -78,7 +72,7 @@ class CityListFragment : Fragment() {
             onCitySelectedListener = listener
         }
     }
-    interface OnCitySelectedListener{
+    interface OnCitySelectedListener{//como protocols en swift
         fun onCitySelected(city: City?, position: Int)
     }
 

@@ -25,7 +25,7 @@ class CityPagerActivity : AppCompatActivity() {
         }
     }
     val pager by lazy { findViewById<ViewPager>(R.id.view_pager)}
-    val cities = Cities()
+//    val cities = Cities()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_city_pager)
@@ -38,15 +38,16 @@ class CityPagerActivity : AppCompatActivity() {
 
         val adapter = object : FragmentPagerAdapter(fragmentManager){
             override fun getItem(position: Int): Fragment {
-                return ForecastFragment.newInstance(cities[position])
+                return ForecastFragment.newInstance(Cities[position])
             }
 
             override fun getCount(): Int {
-                return cities.count
+                return Cities.count
+
             }
 
             override fun getPageTitle(position: Int): CharSequence {
-                return cities[position].name
+                return Cities[position].name
             }
 
         }
@@ -68,7 +69,7 @@ class CityPagerActivity : AppCompatActivity() {
     }
 
     private fun updateCityInfo(position: Int) {
-        supportActionBar?.title = cities[position].name
+        supportActionBar?.title = Cities[position].name
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -99,7 +100,7 @@ class CityPagerActivity : AppCompatActivity() {
         menuPrev?.setEnabled(pager.currentItem > 0)
 
         val menuNext = menu?.findItem(R.id.next)
-        menuNext?.setEnabled(pager.currentItem < cities.count - 1)
+        menuNext?.setEnabled(pager.currentItem < Cities.count - 1)
 
         return true
     }

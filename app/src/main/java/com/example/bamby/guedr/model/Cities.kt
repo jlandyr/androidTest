@@ -1,8 +1,9 @@
 package com.example.bamby.guedr.model
 
 import com.example.bamby.guedr.R
+import java.io.Serializable
 
-class Cities {
+class Cities: Serializable {
     private var cities:List<City> = listOf(
             //listOf = inmubtable
             //mutableListOf = mutable
@@ -16,4 +17,6 @@ class Cities {
 
 //    fun getCity(index:Int) = cities[index]
     operator fun get(i:Int) = cities[i]
+
+    fun toArray() = cities.toTypedArray()
 }

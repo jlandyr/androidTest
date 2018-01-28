@@ -18,38 +18,34 @@ import com.example.bamby.guedr.model.City
 class CityListFragment : Fragment() {
     companion object {
 
-        fun newInstance(): CityListFragment {
-            val fragment = CityListFragment()
-            return fragment
-        }
+        fun newInstance() = CityListFragment()
     }
 
-    lateinit var root:View
-    private var cities: Cities? = null
+    lateinit var root: View
     private var onCitySelectedListener: OnCitySelectedListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-
-        if (inflater != null){
+        if (inflater != null) {
             root = inflater.inflate(R.layout.fragment_city_list, container, false)
             val list = root.findViewById<ListView>(R.id.city_list)
             val adapter = ArrayAdapter<City>(activity, android.R.layout.simple_list_item_1, Cities.toArray())
             list.adapter = adapter
 
-            //nos enteramos de que se ha pulsado un elemento de la lista
-            list.setOnItemClickListener { _, _, position, _ ->
-                //aviso al listener
+            // Nos enteramos de que se ha pulsado un elemento de la lista así:
+            list.setOnItemClickListener { parent, view, position, id ->
+                // Aviso al listener
                 onCitySelectedListener?.onCitySelected(Cities.get(position), position)
             }
         }
+
         return root
     }
+
 
     override fun onAttach(context: Context?) {
         super.onAttach(context)
@@ -67,12 +63,14 @@ class CityListFragment : Fragment() {
         onCitySelectedListener = null
     }
 
-    fun commonAttach(listener:Any?){
-        if (listener is OnCitySelectedListener){
+    fun commonAttach(listener: Any?) {
+        if (listener is OnCitySelectedListener) {
             onCitySelectedListener = listener
         }
     }
-    interface OnCitySelectedListener{//como protocols en swift
+
+
+    interface OnCitySelectedListener {
         fun onCitySelected(city: City?, position: Int)
     }
 

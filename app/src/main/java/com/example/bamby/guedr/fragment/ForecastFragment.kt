@@ -79,6 +79,7 @@ class ForecastFragment: Fragment() {
                 val humidityString = getString(R.string.humidity_format, value.humidity)
                 humidity.text = humidityString
                 viewSwitcher.displayedChild = VIEW_INDEX.FORECAST.index
+                city?.forecast = value //supercaché de la muerte
             }else{
                 updateForecast()
             }

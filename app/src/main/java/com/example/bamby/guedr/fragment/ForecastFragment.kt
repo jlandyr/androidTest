@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.ViewSwitcher
 import com.example.bamby.guedr.CONSTANT_OWM_APIKEY
 
 import com.example.bamby.guedr.PREFERENCE_SHOW_CELSIUS
@@ -29,6 +30,11 @@ import java.net.URL
 import java.util.*
 
 class ForecastFragment: Fragment() {
+
+    enum class VIEW_INDEX(val index:Int){
+        LOADING(0),
+        FORECAST(1)
+    }
     companion object {
         val REQUEST_UNITS = 1
         private var ARG_CITY = "ARG_CITY"
@@ -45,7 +51,7 @@ class ForecastFragment: Fragment() {
     lateinit var root: View
     lateinit var maxTemp: TextView //lateinit asegura que al momento de crear la variable va a tener una valor
     lateinit var minTemp: TextView  //lateinit permite usarla sin ? al final del nombre del a variable
-
+    lateinit var viewSwitcher: ViewSwitcher
 
     var city: City? = null
         set(value){
@@ -72,6 +78,7 @@ class ForecastFragment: Fragment() {
                 updateTemperature()
                 val humidityString = getString(R.string.humidity_format, value.humidity)
                 humidity.text = humidityString
+                viewSwitcher.displayedChild = VIEW_INDEX.FORECAST.index
             }else{
                 updateForecast()
             }
@@ -81,6 +88,7 @@ class ForecastFragment: Fragment() {
     private fun updateForecast(){
 
        async(UI){
+           viewSwitcher.displayedChild = VIEW_INDEX.LOADING.index
            val newForecast: Deferred<Forecast?> = bg {
                downloadForecast(city)//lo hace en background
            }
@@ -130,11 +138,16 @@ class ForecastFragment: Fragment() {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
     }
+
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
          super.onCreateView(inflater, container, savedInstanceState)
         if (inflater != null) {
             root = inflater.inflate(R.layout.fragment_forecast, container, false)
-//            forecast = Forecast(maxTemp = 25f, mineTemp = 10f, humidity = 35f, description = "Día soleado", icon = R.drawable.ico_01)
+
+            viewSwitcher = root.findViewById(R.id.view_switcher)
+            viewSwitcher.setInAnimation(activity, android.R.anim.fade_in)
+            viewSwitcher.setOutAnimation(activity, android.R.anim.fade_out)
+
             if (arguments != null){
                 city = arguments.getSerializable(ARG_CITY) as? City
             }

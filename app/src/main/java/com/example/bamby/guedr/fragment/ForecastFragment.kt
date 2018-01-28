@@ -3,6 +3,7 @@ package com.example.bamby.guedr.fragment
 import android.app.Activity
 import android.app.Fragment
 import android.content.Intent
+import android.os.AsyncTask
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.design.widget.Snackbar
@@ -10,13 +11,17 @@ import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
+import com.example.bamby.guedr.CONSTANT_OWM_APIKEY
 
 import com.example.bamby.guedr.PREFERENCE_SHOW_CELSIUS
 import com.example.bamby.guedr.R
 import com.example.bamby.guedr.activity.SettingsActivity
 import com.example.bamby.guedr.model.City
 import com.example.bamby.guedr.model.Forecast
+import org.json.JSONObject
 import org.w3c.dom.Text
+import java.net.HttpURLConnection
+import java.net.URL
 
 class ForecastFragment: Fragment() {
     companion object {
@@ -39,6 +44,7 @@ class ForecastFragment: Fragment() {
 
     var city: City? = null
         set(value){
+            field = value
             if (value != null){
                 root.findViewById<TextView>(R.id.city).text = value.name
                 forecast = value.forecast
@@ -55,15 +61,86 @@ class ForecastFragment: Fragment() {
             val forecastDescription = root.findViewById<TextView>(R.id.forecast_description)
 
             //actualizamos vista con modelo
-            value?.let{//parecido a if let de swift
+            if (value != null){
                 forecastImage.setImageResource(value.icon)
                 forecastDescription.text = value.description
                 updateTemperature()
                 val humidityString = getString(R.string.humidity_format, value.humidity)
                 humidity.text = humidityString
+            }else{
+                updateForecast()
             }
 
         }
+
+    private fun updateForecast(){
+
+        val weatherDownloader = object : AsyncTask<City, Int, Forecast?>() {
+            override fun onPreExecute() {
+                super.onPreExecute()
+            }
+            override fun doInBackground(vararg params: City): Forecast? {
+                return downloadForecast(params[0])
+            }
+
+            override fun onPostExecute(result: Forecast?) {
+                super.onPostExecute(result)
+                if (result != null){
+                    //actualiza interfaz en main thread
+                    city?.forecast = result
+                    forecast = result//actualiza interfaz
+                }
+            }
+        }
+        weatherDownloader.execute(city)
+
+    }
+
+    fun downloadForecast(city:City):Forecast?{
+        try {
+//descargamos info de openweathermap
+            val url = URL("https://api.openweathermap.org/data/2.5/forecast/daily?q=${city.name}&lang=sp&units=metric&appid=${CONSTANT_OWM_APIKEY}")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.connect()
+            val data = ByteArray(1024)
+            var downloadedBytes:Int
+            val input = connection.inputStream
+            val stringBuilder = StringBuilder()
+            downloadedBytes= input.read(data)
+            while (downloadedBytes != -1){
+                stringBuilder.append(String(data,0, downloadedBytes))
+                downloadedBytes = input.read(data)
+            }
+            //Analizamos JSON descargado
+            val jsonRoot = JSONObject(stringBuilder.toString())
+            var list = jsonRoot.getJSONArray("list")
+            val today = list.getJSONObject(0)
+            val maxToday = today.getJSONObject("temp").getDouble("max").toFloat()
+            val minToday = today.getJSONObject("temp").getDouble("min").toFloat()
+            val humidity = today.getDouble("humidity").toFloat()
+            val description = today.getJSONArray("weather").getJSONObject(0).getString("description")
+            var iconString = today.getJSONArray("weather").getJSONObject(0).getString("icon")
+            //convertimos texto iconString -> drawable
+            iconString = iconString.substring(0, iconString.length - 1)//le quitamos el último caracter (d/n)
+            val iconInt = iconString.toInt()
+            val iconResource = when (iconInt){
+                2 -> R.drawable.ico_02
+                3 -> R.drawable.ico_03
+                4 -> R.drawable.ico_04
+                9 -> R.drawable.ico_09
+                10 -> R.drawable.ico_10
+                11 -> R.drawable.ico_11
+                13 -> R.drawable.ico_13
+                50 -> R.drawable.ico_50
+                else -> R.drawable.ico_01
+            }
+
+            return Forecast(maxToday, minToday, humidity, description, iconResource)
+        }catch (ex:Exception){
+            ex.printStackTrace()
+        }
+        return null
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

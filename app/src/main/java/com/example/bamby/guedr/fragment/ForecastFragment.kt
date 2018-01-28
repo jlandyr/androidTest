@@ -1,6 +1,7 @@
 package com.example.bamby.guedr.fragment
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.Fragment
 import android.content.Intent
 import android.os.AsyncTask
@@ -93,7 +94,20 @@ class ForecastFragment: Fragment() {
            val newForecast: Deferred<Forecast?> = bg {
                downloadForecast(city)//lo hace en background
            }
-           forecast = newForecast.await()//main thread
+           val downloadedForecast = newForecast.await()//main thread
+           if (downloadedForecast != null){
+               forecast = downloadedForecast
+           }else{
+               AlertDialog.Builder(activity)
+                       .setTitle("Error")
+                       .setMessage("No me pude descargar la información del tiempo")
+                       .setPositiveButton("Reintentar", {dialog, _ ->
+                           dialog.dismiss()
+                           updateForecast()
+                       })
+                       .setNegativeButton("Cancelar", {dialog, _ -> activity.finish()})
+                       .show()
+           }
        }
 
     }

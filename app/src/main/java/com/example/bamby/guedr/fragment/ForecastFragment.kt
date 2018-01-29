@@ -63,7 +63,7 @@ class ForecastFragment: Fragment() {
             }
         }
 
-    var forecast : Forecast? = null
+    var forecast : List<Forecast>? = null
         set(value) {
             field = value
             val forecastImage = root.findViewById<ImageView>(R.id.forecast_image)
@@ -91,7 +91,7 @@ class ForecastFragment: Fragment() {
 
        async(UI){
            viewSwitcher.displayedChild = VIEW_INDEX.LOADING.index
-           val newForecast: Deferred<Forecast?> = bg {
+           val newForecast: Deferred<List<Forecast>?> = bg {
                downloadForecast(city)//lo hace en background
            }
            val downloadedForecast = newForecast.await()//main thread
@@ -112,8 +112,12 @@ class ForecastFragment: Fragment() {
 
     }
 
-    fun downloadForecast(city:City?):Forecast?{
+    fun downloadForecast(city:City?):List<Forecast>?{
         try {
+
+            //simulamos un retardo
+            Thread.sleep(500)
+
             //descargamos info de openweathermap
             val url = URL("https://api.openweathermap.org/data/2.5/forecast/daily?q=${city?.name}&lang=sp&units=metric&appid=${CONSTANT_OWM_APIKEY}")
             val jsonString = Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next()
@@ -121,28 +125,34 @@ class ForecastFragment: Fragment() {
             //Analizamos JSON descargado
             val jsonRoot = JSONObject(jsonString)
             var list = jsonRoot.getJSONArray("list")
-            val today = list.getJSONObject(0)
-            val maxToday = today.getJSONObject("temp").getDouble("max").toFloat()
-            val minToday = today.getJSONObject("temp").getDouble("min").toFloat()
-            val humidity = today.getDouble("humidity").toFloat()
-            val description = today.getJSONArray("weather").getJSONObject(0).getString("description")
-            var iconString = today.getJSONArray("weather").getJSONObject(0).getString("icon")
-            //convertimos texto iconString -> drawable
-            iconString = iconString.substring(0, iconString.length - 1)//le quitamos el último caracter (d/n)
-            val iconInt = iconString.toInt()
-            val iconResource = when (iconInt){
-                2 -> R.drawable.ico_02
-                3 -> R.drawable.ico_03
-                4 -> R.drawable.ico_04
-                9 -> R.drawable.ico_09
-                10 -> R.drawable.ico_10
-                11 -> R.drawable.ico_11
-                13 -> R.drawable.ico_13
-                50 -> R.drawable.ico_50
-                else -> R.drawable.ico_01
-            }
 
-            return Forecast(maxToday, minToday, humidity, description, iconResource)
+            //lista mutable, para llenarla con predicciones del JSON
+            val forecastS = mutableListOf<Forecast>()
+            for (dayIndex in 0 until list.length()){
+                val today = list.getJSONObject(dayIndex)
+                val maxToday = today.getJSONObject("temp").getDouble("max").toFloat()
+                val minToday = today.getJSONObject("temp").getDouble("min").toFloat()
+                val humidity = today.getDouble("humidity").toFloat()
+                val description = today.getJSONArray("weather").getJSONObject(0).getString("description")
+                var iconString = today.getJSONArray("weather").getJSONObject(0).getString("icon")
+                //convertimos texto iconString -> drawable
+                iconString = iconString.substring(0, iconString.length - 1)//le quitamos el último caracter (d/n)
+                val iconInt = iconString.toInt()
+                val iconResource = when (iconInt){
+                    2 -> R.drawable.ico_02
+                    3 -> R.drawable.ico_03
+                    4 -> R.drawable.ico_04
+                    9 -> R.drawable.ico_09
+                    10 -> R.drawable.ico_10
+                    11 -> R.drawable.ico_11
+                    13 -> R.drawable.ico_13
+                    50 -> R.drawable.ico_50
+                    else -> R.drawable.ico_01
+                }
+                forecastS.add (Forecast(maxToday, minToday, humidity, description, iconResource))
+            }
+            return forecastS
+
         }catch (ex:Exception){
             ex.printStackTrace()
         }

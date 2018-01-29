@@ -8,16 +8,19 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.design.widget.Snackbar
+import android.support.v7.widget.DefaultItemAnimator
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewSwitcher
 import com.example.bamby.guedr.CONSTANT_OWM_APIKEY
-
 import com.example.bamby.guedr.PREFERENCE_SHOW_CELSIUS
 import com.example.bamby.guedr.R
 import com.example.bamby.guedr.activity.SettingsActivity
+import com.example.bamby.guedr.adapter.ForecastRecyclerViewAdapter
 import com.example.bamby.guedr.model.City
 import com.example.bamby.guedr.model.Forecast
 import kotlinx.coroutines.experimental.Deferred
@@ -25,147 +28,70 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.json.JSONObject
-import org.w3c.dom.Text
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
 
+
+
 class ForecastFragment: Fragment() {
 
-    enum class VIEW_INDEX(val index:Int){
+    enum class VIEW_INDEX(val index: Int) {
         LOADING(0),
         FORECAST(1)
     }
+
     companion object {
         val REQUEST_UNITS = 1
-        private var ARG_CITY = "ARG_CITY"
+        private val ARG_CITY = "ARG_CITY"
 
-        fun newInstance(city:City): ForecastFragment {
+        fun newInstance(city: City): ForecastFragment {
             val fragment = ForecastFragment()
+
             val arguments = Bundle()
             arguments.putSerializable(ARG_CITY, city)
             fragment.arguments = arguments
+
             return fragment
         }
     }
 
+
     lateinit var root: View
-    lateinit var maxTemp: TextView //lateinit asegura que al momento de crear la variable va a tener una valor
-    lateinit var minTemp: TextView  //lateinit permite usarla sin ? al final del nombre del a variable
     lateinit var viewSwitcher: ViewSwitcher
+    lateinit var forecastList: RecyclerView
 
     var city: City? = null
-        set(value){
+        set(value) {
             field = value
-            if (value != null){
-                root.findViewById<TextView>(R.id.city).text = value.name
+            if (value != null) {
                 forecast = value.forecast
             }
         }
-
-    var forecast : List<Forecast>? = null
+    var forecast: List<Forecast>? = null
         set(value) {
             field = value
-            val forecastImage = root.findViewById<ImageView>(R.id.forecast_image)
-            maxTemp = root.findViewById(R.id.max_temp)
-            minTemp = root.findViewById(R.id.min_temp)
-            val humidity = root.findViewById<TextView>(R.id.humidity)
-            val forecastDescription = root.findViewById<TextView>(R.id.forecast_description)
+            // Actualizamos la vista con el modelo
+            if (value != null) {
+                // Asignamos el adapter al RecyclerView ahora que tenemos datos
+                forecastList.adapter = ForecastRecyclerViewAdapter(value, temperatureUnits())
 
-            //actualizamos vista con modelo
-            if (value != null){
-                forecastImage.setImageResource(value.icon)
-                forecastDescription.text = value.description
-                updateTemperature()
-                val humidityString = getString(R.string.humidity_format, value.humidity)
-                humidity.text = humidityString
                 viewSwitcher.displayedChild = VIEW_INDEX.FORECAST.index
-                city?.forecast = value //supercaché de la muerte
-            }else{
+                city?.forecast = value // Supercaché de la "muerte"
+            }
+            else {
                 updateForecast()
             }
-
         }
-
-    private fun updateForecast(){
-
-       async(UI){
-           viewSwitcher.displayedChild = VIEW_INDEX.LOADING.index
-           val newForecast: Deferred<List<Forecast>?> = bg {
-               downloadForecast(city)//lo hace en background
-           }
-           val downloadedForecast = newForecast.await()//main thread
-           if (downloadedForecast != null){
-               forecast = downloadedForecast
-           }else{
-               AlertDialog.Builder(activity)
-                       .setTitle("Error")
-                       .setMessage("No me pude descargar la información del tiempo")
-                       .setPositiveButton("Reintentar", {dialog, _ ->
-                           dialog.dismiss()
-                           updateForecast()
-                       })
-                       .setNegativeButton("Cancelar", {dialog, _ -> activity.finish()})
-                       .show()
-           }
-       }
-
-    }
-
-    fun downloadForecast(city:City?):List<Forecast>?{
-        try {
-
-            //simulamos un retardo
-            Thread.sleep(500)
-
-            //descargamos info de openweathermap
-            val url = URL("https://api.openweathermap.org/data/2.5/forecast/daily?q=${city?.name}&lang=sp&units=metric&appid=${CONSTANT_OWM_APIKEY}")
-            val jsonString = Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next()
-
-            //Analizamos JSON descargado
-            val jsonRoot = JSONObject(jsonString)
-            var list = jsonRoot.getJSONArray("list")
-
-            //lista mutable, para llenarla con predicciones del JSON
-            val forecastS = mutableListOf<Forecast>()
-            for (dayIndex in 0 until list.length()){
-                val today = list.getJSONObject(dayIndex)
-                val maxToday = today.getJSONObject("temp").getDouble("max").toFloat()
-                val minToday = today.getJSONObject("temp").getDouble("min").toFloat()
-                val humidity = today.getDouble("humidity").toFloat()
-                val description = today.getJSONArray("weather").getJSONObject(0).getString("description")
-                var iconString = today.getJSONArray("weather").getJSONObject(0).getString("icon")
-                //convertimos texto iconString -> drawable
-                iconString = iconString.substring(0, iconString.length - 1)//le quitamos el último caracter (d/n)
-                val iconInt = iconString.toInt()
-                val iconResource = when (iconInt){
-                    2 -> R.drawable.ico_02
-                    3 -> R.drawable.ico_03
-                    4 -> R.drawable.ico_04
-                    9 -> R.drawable.ico_09
-                    10 -> R.drawable.ico_10
-                    11 -> R.drawable.ico_11
-                    13 -> R.drawable.ico_13
-                    50 -> R.drawable.ico_50
-                    else -> R.drawable.ico_01
-                }
-                forecastS.add (Forecast(maxToday, minToday, humidity, description, iconResource))
-            }
-            return forecastS
-
-        }catch (ex:Exception){
-            ex.printStackTrace()
-        }
-        return null
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setHasOptionsMenu(true)
     }
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View {
-         super.onCreateView(inflater, container, savedInstanceState)
+        super.onCreateView(inflater, container, savedInstanceState)
         if (inflater != null) {
             root = inflater.inflate(R.layout.fragment_forecast, container, false)
 
@@ -173,7 +99,19 @@ class ForecastFragment: Fragment() {
             viewSwitcher.setInAnimation(activity, android.R.anim.fade_in)
             viewSwitcher.setOutAnimation(activity, android.R.anim.fade_out)
 
-            if (arguments != null){
+            // 1) Accedemos al RecyclerView con findViewById
+            forecastList = root.findViewById(R.id.forecast_list)
+
+            // 2) Le decimos cómo debe visualizarse el RecyclerView (su LayoutManager)
+            forecastList.layoutManager = LinearLayoutManager(activity)
+
+            // 3) Le decimos cómo debe animarse el RecyclerView (su ItemAnimator)
+            forecastList.itemAnimator = DefaultItemAnimator()
+
+            // 4) Por último, un RecylerView necesita un adapter
+            // Esto aún no lo hacemos aquí porque aquí aún no tenemos datos
+
+            if (arguments != null) {
                 city = arguments.getSerializable(ARG_CITY) as? City
             }
         }
@@ -187,67 +125,45 @@ class ForecastFragment: Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        if (item?.itemId == R.id.menu_show_settings){
-            val units =  if (temperatureUnits() == Forecast.TempUnit.CELSIUS)
+        if (item?.itemId == R.id.menu_show_settings) {
+            // Aquí sabemos que se ha pulsado la opción de menú de mostrar ajustes
+            val units = if (temperatureUnits() == Forecast.TempUnit.CELSIUS)
                 R.id.celsius_rb
             else
                 R.id.farenheit_rb
-            //aquí sabemos que item se seleccionó
-            val intent = SettingsActivity.intent(activity,units )
-            //startActivity(intent)//la 2da pantalla no nos devuelve ningún valor
-            startActivityForResult(intent, REQUEST_UNITS)//cuando la pantalla q llamamos nos va a devolver algún valor
+            val intent = SettingsActivity.intent(activity, units)
+            // Esto lo haríamos si la segunda pantalla no nos tiene que devolver nada
+            //startActivity(intent)
+
+            // Esto lo hacemos porque la segunda pantalla nos tiene que devolver unos valores
+            startActivityForResult(intent, REQUEST_UNITS)
+
             return true
         }
+
         return super.onOptionsItemSelected(item)
-
-    }
-
-    //para saber si estando en un Viewpager debemos refrescar las unidades
-    //parecido al viewWillAppear de los fragment
-    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
-        super.setUserVisibleHint(isVisibleToUser)
-        if (isVisibleToUser && forecast != null){
-            updateTemperature()
-        }
-    }
-    private fun updateTemperature() {
-        val units = temperatureUnits()
-        val unitsString = temperatureUnitsString(units)
-        val maxTempString = getString(R.string.max_temp_format, forecast?.getMaxTemp(units), unitsString)
-        val minTempString = getString(R.string.min_temp_format, forecast?.getMinTemp(units), unitsString)
-        maxTemp.text = maxTempString
-        minTemp.text = minTempString
-    }
-    private fun temperatureUnitsString(units: Forecast.TempUnit) = if (units == Forecast.TempUnit.CELSIUS) "C" else "F"
-
-
-    private fun temperatureUnits(): Forecast.TempUnit {
-        return when (PreferenceManager.getDefaultSharedPreferences(activity)
-                .getBoolean(PREFERENCE_SHOW_CELSIUS, true)){
-            true -> Forecast.TempUnit.CELSIUS
-            false -> Forecast.TempUnit.FARENHEIT
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == 1){
-            if (resultCode == Activity.RESULT_OK){
+        if (requestCode == REQUEST_UNITS) {
+            if (resultCode == Activity.RESULT_OK) {
                 val unitSelected = data?.getIntExtra(SettingsActivity.EXTRA_UNITS, R.id.celsius_rb)
-                if (unitSelected == R.id.celsius_rb){
-                    Log.v("TAG","Soy ForecastActivity y han pulsado OK y celsius_rb")
-//                    Toast.makeText(this, "Celsius seleccionado", Toast.LENGTH_LONG).show()
-
-                }else if (unitSelected == R.id.farenheit_rb){
-                    Log.v("TAG","Soy ForecastActivity y han pulsado OK y fahrenheit_rb")
-//                    Toast.makeText(this, "Fahrenheit seleccionado", Toast.LENGTH_SHORT).show()
+                when (unitSelected) {
+                    R.id.celsius_rb -> {
+                        Log.v("TAG", "Soy ForecastActivity y han pulsado OK y Celsius")
+                        //Toast.makeText(this, "Celsius seleccionado", Toast.LENGTH_LONG).show()
+                    }
+                    R.id.farenheit_rb -> {
+                        Log.v("TAG", "Soy ForecastActivity y han pulsado OK y Fahrenheit")
+                        //Toast.makeText(this, "Fahrenheit seleccionado", Toast.LENGTH_LONG).show()
+                    }
                 }
 
-                val oldPreferences = temperatureUnits()
+                val oldShowCelsius = temperatureUnits() // Me las guardo para luego por si el usuario quiere deshacer
 
                 PreferenceManager.getDefaultSharedPreferences(activity)
-                        //equivalente a NSUserDefaults de Swift
                         .edit()
                         .putBoolean(PREFERENCE_SHOW_CELSIUS, unitSelected == R.id.celsius_rb)
                         .apply()
@@ -256,17 +172,122 @@ class ForecastFragment: Fragment() {
                 Snackbar.make(root, "Han cambiado las preferencias", Snackbar.LENGTH_LONG)
                         .setAction("Deshacer") {
                             PreferenceManager.getDefaultSharedPreferences(activity)
-                                    //equivalente a NSUserDefaults de Swift
                                     .edit()
-                                    .putBoolean(PREFERENCE_SHOW_CELSIUS, oldPreferences == Forecast.TempUnit.CELSIUS)
+                                    .putBoolean(PREFERENCE_SHOW_CELSIUS, oldShowCelsius == Forecast.TempUnit.CELSIUS)
                                     .apply()
                             updateTemperature()
                         }
                         .show()
-
-            }else{
-                Log.v("TAG","Soy ForecastActivity y han pulsado CANCEL")
+            }
+            else {
+                Log.v("TAG", "Soy ForecastActivity y han pulsado CANCEL")
             }
         }
+    }
+
+    // Para saber si, estando en un ViewPager por ejemplo, debemos refrescar las unidades de las temperaturas
+    // Es algo así como el viewWillAppear de los Fragment
+    override fun setUserVisibleHint(isVisibleToUser: Boolean) {
+        super.setUserVisibleHint(isVisibleToUser)
+        if (isVisibleToUser && forecast != null) {
+            updateTemperature()
+        }
+    }
+
+    private fun updateForecast() {
+        viewSwitcher.displayedChild = VIEW_INDEX.LOADING.index
+        async(UI) {
+            val newForecast: Deferred<List<Forecast>?> = bg {
+                downloadForecast(city)
+            }
+
+            val downloadedForecast = newForecast.await()
+
+            if (downloadedForecast != null) {
+                // Tóh' ha ido bien, se lo asigno al atributo forecast
+                forecast = downloadedForecast
+            }
+            else {
+                // Ha habido algún tipo de error, se lo decimos al usuario con un diálogo
+                AlertDialog.Builder(activity)
+                        .setTitle("Error")
+                        .setMessage("No me pude descargar la información del tiempo")
+                        .setPositiveButton("Reintentar", { dialog, _ ->
+                            dialog.dismiss()
+                            updateForecast()
+                        })
+                        .setNegativeButton("Salir", { _, _ -> activity.finish() })
+                        .show()
+            }
+        }
+    }
+
+    fun downloadForecast(city: City?): List<Forecast>? {
+        try {
+            // Simulamos un retardo
+            Thread.sleep(1000)
+
+            // Nos descargamos la información del tiempo a machete
+            val url = URL("https://api.openweathermap.org/data/2.5/forecast/daily?q=${city?.name}&lang=sp&units=metric&appid=${CONSTANT_OWM_APIKEY}")
+            val jsonString = Scanner(url.openStream(), "UTF-8").useDelimiter("\\A").next()
+
+            // Analizamos los datos que nos acabamos de descargar
+            val jsonRoot = JSONObject(jsonString)
+            val list = jsonRoot.getJSONArray("list")
+
+            // Nos creamos la lista que vamos a ir rellenando con las predicciones del JSON
+            val forecasts = mutableListOf<Forecast>()
+
+            // Recorremos la lista del objeto JSON
+//            for (dayIndex in 0..list.length() - 1) {
+            for (dayIndex in 0 until list.length()) {
+                val today = list.getJSONObject(dayIndex)
+                val max = today.getJSONObject("temp").getDouble("max").toFloat()
+                val min = today.getJSONObject("temp").getDouble("min").toFloat()
+                val humidity = today.getDouble("humidity").toFloat()
+                val description = today.getJSONArray("weather").getJSONObject(0).getString("description")
+                var iconString = today.getJSONArray("weather").getJSONObject(0).getString("icon")
+
+                // Convertimos el texto iconString a un drawable
+                iconString = iconString.substring(0, iconString.length - 1)
+                val iconInt = iconString.toInt()
+                val iconResource = when (iconInt) {
+                    2 -> R.drawable.ico_02
+                    3 -> R.drawable.ico_03
+                    4 -> R.drawable.ico_04
+                    9 -> R.drawable.ico_09
+                    10 -> R.drawable.ico_10
+                    11 -> R.drawable.ico_11
+                    13 -> R.drawable.ico_13
+                    50 -> R.drawable.ico_50
+                    else -> R.drawable.ico_01
+                }
+
+                forecasts.add(Forecast(max, min, humidity, description, iconResource))
+            }
+
+            return forecasts
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+
+        return null
+    }
+
+    private fun updateTemperature() {
+        forecastList.adapter.notifyDataSetChanged()
+    }
+
+    private fun temperatureUnitsString(units: Forecast.TempUnit) = when (units) {
+        Forecast.TempUnit.CELSIUS -> "ºC"
+        else -> "F"
+    }
+
+    private fun temperatureUnits() = if (PreferenceManager.getDefaultSharedPreferences(activity)
+            .getBoolean(PREFERENCE_SHOW_CELSIUS, true)) {
+        Forecast.TempUnit.CELSIUS
+    }
+    else {
+        Forecast.TempUnit.FARENHEIT
     }
 }

@@ -12,7 +12,7 @@ import com.example.bamby.guedr.R
 import com.example.bamby.guedr.model.Forecast
 import kotlinx.android.synthetic.main.content_forecast.view.*
 
-class ForecastRecyclerViewAdapter(val forecast: List<Forecast>?, val tempUnit: Forecast.TempUnit): RecyclerView.Adapter<ForecastRecyclerViewAdapter.ForecastViewHolder>() {
+class ForecastRecyclerViewAdapter(val forecast: List<Forecast>?) : RecyclerView.Adapter<ForecastRecyclerViewAdapter.ForecastViewHolder>() {
 
     var onClickListener: View.OnClickListener? = null
 
@@ -25,7 +25,7 @@ class ForecastRecyclerViewAdapter(val forecast: List<Forecast>?, val tempUnit: F
     override fun onBindViewHolder(holder: ForecastViewHolder?, position: Int) {
         if (forecast != null)
         {
-            holder?.bindForecast(forecast[position], tempUnit, position)
+            holder?.bindForecast(forecast[position], position)
         }
     }
 
@@ -41,14 +41,14 @@ class ForecastRecyclerViewAdapter(val forecast: List<Forecast>?, val tempUnit: F
         val humidity = itemView.findViewById<TextView>(R.id.humidity)
         val forecastDescription = itemView.findViewById<TextView>(R.id.forecast_description)
 
-        fun bindForecast(forecast: Forecast, tempUnit: Forecast.TempUnit, position: Int) {
+        fun bindForecast(forecast: Forecast, position: Int) {
             // Accedemos al contexto
             val context = itemView.context
 
             // Actualizamos la vista con el modelo
             forecastImage.setImageResource(forecast.icon)
             forecastDescription.text = forecast.description
-            updateTemperature(forecast, tempUnit)
+            updateTemperature(forecast, temperatureUnits())
             val humidityString = context.getString(R.string.humidity_format, forecast.humidity)
             humidity.text = humidityString
             day.text = generateDayText(position)
@@ -75,6 +75,14 @@ class ForecastRecyclerViewAdapter(val forecast: List<Forecast>?, val tempUnit: F
         private fun temperatureUnitsString(units: Forecast.TempUnit) = when (units) {
             Forecast.TempUnit.CELSIUS -> "ºC"
             else -> "F"
+        }
+
+        private fun temperatureUnits() = if (PreferenceManager.getDefaultSharedPreferences(itemView.context)
+                .getBoolean(PREFERENCE_SHOW_CELSIUS, true)) {
+            Forecast.TempUnit.CELSIUS
+        }
+        else {
+            Forecast.TempUnit.FARENHEIT
         }
 
     }

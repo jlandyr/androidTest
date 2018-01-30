@@ -78,7 +78,7 @@ class ForecastFragment: Fragment() {
             if (value != null) {
                 // Asignamos el adapter al RecyclerView ahora que tenemos datos
 
-                val adapter = ForecastRecyclerViewAdapter(value, temperatureUnits())
+                val adapter = ForecastRecyclerViewAdapter(value)
                 forecastList.adapter = adapter
 
                 // Le digo al RecyclerViewAdapter que me informe cuando pulsen una de sus vistas
@@ -290,7 +290,7 @@ class ForecastFragment: Fragment() {
     }
 
     private fun updateTemperature() {
-        forecastList.adapter = ForecastRecyclerViewAdapter(forecast, temperatureUnits())
+        forecastList.adapter.notifyDataSetChanged()
     }
 
     private fun temperatureUnitsString(units: Forecast.TempUnit) = when (units) {

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
 import com.example.bamby.guedr.PREFERENCE_SHOW_CELSIUS
@@ -17,6 +18,7 @@ class DetailActivity : AppCompatActivity() {
         private val EXTRA_FORECAST = "EXTRA_FORECAST"
         private val EXTRA_DAY = "EXTRA_DAY"
         private val EXTRA_CITY = "EXTRA_CITY"
+
 
         fun intent(context: Context, city: String?, day: String?, forecast: Forecast): Intent {
             val intent = Intent(context, DetailActivity::class.java)
@@ -32,7 +34,7 @@ class DetailActivity : AppCompatActivity() {
         setContentView(R.layout.activity_detail)
 
         supportActionBar?.title = intent.getStringExtra(EXTRA_CITY)
-
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         val forecast = intent.getSerializableExtra(EXTRA_FORECAST) as? Forecast
 
         if (forecast != null) {
@@ -75,5 +77,13 @@ class DetailActivity : AppCompatActivity() {
     }
     else {
         Forecast.TempUnit.FARENHEIT
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        if (item?.itemId == android.R.id.home){
+            finish()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

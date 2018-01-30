@@ -264,7 +264,7 @@ class ForecastFragment: Fragment() {
                 var iconString = today.getJSONArray("weather").getJSONObject(0).getString("icon")
 
                 // Convertimos el texto iconString a un drawable
-                iconString = iconString.substring(0, iconString.length - 1)
+                iconString = iconString.substring(0, 2)
                 val iconInt = iconString.toInt()
                 val iconResource = when (iconInt) {
                     2 -> R.drawable.ico_02

@@ -25,6 +25,7 @@ import com.example.bamby.guedr.activity.SettingsActivity
 import com.example.bamby.guedr.adapter.ForecastRecyclerViewAdapter
 import com.example.bamby.guedr.model.City
 import com.example.bamby.guedr.model.Forecast
+import com.example.bamby.guedr.activity.DetailActivity
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.async
@@ -76,8 +77,20 @@ class ForecastFragment: Fragment() {
             // Actualizamos la vista con el modelo
             if (value != null) {
                 // Asignamos el adapter al RecyclerView ahora que tenemos datos
-                forecastList.adapter = ForecastRecyclerViewAdapter(value, temperatureUnits())
 
+                val adapter = ForecastRecyclerViewAdapter(value, temperatureUnits())
+                forecastList.adapter = adapter
+
+                // Le digo al RecyclerViewAdapter que me informe cuando pulsen una de sus vistas
+                adapter.onClickListener = View.OnClickListener { v: View? ->
+                    // Aquí me entero que se ha pulsado una de las vistas
+                    val position = forecastList.getChildAdapterPosition(v)
+                    val forecastToShow = value[position]
+                    val day = v?.findViewById<TextView>(R.id.day)?.text.toString()
+
+                    // Lanzamos la actividad detalle
+                    startActivity(DetailActivity.intent(activity, city?.name, day, forecastToShow))
+                }
                 viewSwitcher.displayedChild = VIEW_INDEX.FORECAST.index
                 city?.forecast = value // Supercaché de la "muerte"
             }

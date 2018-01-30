@@ -13,8 +13,12 @@ import com.example.bamby.guedr.model.Forecast
 import kotlinx.android.synthetic.main.content_forecast.view.*
 
 class ForecastRecyclerViewAdapter(val forecast: List<Forecast>?, val tempUnit: Forecast.TempUnit): RecyclerView.Adapter<ForecastRecyclerViewAdapter.ForecastViewHolder>() {
+
+    var onClickListener: View.OnClickListener? = null
+
     override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ForecastViewHolder {
         val view = LayoutInflater.from(parent?.context).inflate(R.layout.content_forecast, parent, false)
+        view.setOnClickListener(onClickListener)
         return ForecastViewHolder(view)
     }
 
